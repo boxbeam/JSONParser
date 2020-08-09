@@ -61,7 +61,6 @@ public class JSONParser {
 					break;
 				case ',':
 					if (!quote && depth == 0) {
-						i++;
 						String key = trim(builder, true, 0, split);
 						String value = trim(builder, false, split + 1, builder.length());
 						map.put(key, parse(value));
@@ -96,7 +95,7 @@ public class JSONParser {
 	public static JSONList parseList(String string) {
 		JSONList list = new JSONList();
 		if (!(string.startsWith("[") && string.endsWith("]"))) {
-			throw new ParseException("Input is not a valid JSON map");
+			throw new ParseException("Input is not a valid JSON list");
 		}
 		StringBuilder builder = new StringBuilder();
 		int depth = 0;
@@ -120,7 +119,6 @@ public class JSONParser {
 					continue;
 				case ',':
 					if (!quote && depth == 0) {
-						i++;
 						list.add(parse(trim(builder, false, 0, builder.length())));
 						builder.setLength(0);
 						continue;
