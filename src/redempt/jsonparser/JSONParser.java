@@ -97,10 +97,10 @@ public class JSONParser {
 						}
 						switch (parentType) {
 							case LIST:
-								((AbstractJSONList) currentParent).add(value);
+								((JSONList) currentParent).add(value);
 								break;
 							case MAP:
-								((AbstractJSONMap) currentParent).put(key, value);
+								((JSONMap) currentParent).put(key, value);
 								key = null;
 						}
 					} else {
@@ -117,17 +117,17 @@ public class JSONParser {
 					if (end) {
 						JSONStorage prev = currentParent;
 						currentParent = currentParent.getParent();
-						parentType = currentParent instanceof AbstractJSONList ? Type.LIST : Type.MAP;
+						parentType = currentParent instanceof JSONList ? Type.LIST : Type.MAP;
 						if (currentParent != null) {
 							switch (parentType) {
 								case MAP:
-									((AbstractJSONMap) currentParent).put(((AbstractJSONMap) currentParent).key, prev);
-									((AbstractJSONMap) currentParent).key = null;
+									((JSONMap) currentParent).put(((JSONMap) currentParent).key, prev);
+									((JSONMap) currentParent).key = null;
 									break;
 								case LIST:
-									if (((AbstractJSONList) currentParent).add) {
-										((AbstractJSONList) currentParent).add(prev);
-										((AbstractJSONList) currentParent).add = false;
+									if (((JSONList) currentParent).add) {
+										((JSONList) currentParent).add(prev);
+										((JSONList) currentParent).add = false;
 									}
 									break;
 							}
@@ -144,10 +144,10 @@ public class JSONParser {
 					}
 					switch (parentType) {
 						case LIST:
-							((AbstractJSONList) currentParent).add = true;
+							((JSONList) currentParent).add = true;
 							break;
 						case MAP:
-							((AbstractJSONMap) currentParent).key = key;
+							((JSONMap) currentParent).key = key;
 					}
 					key = null;
 					JSONStorage next;

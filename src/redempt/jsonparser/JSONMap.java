@@ -1,6 +1,11 @@
 package redempt.jsonparser;
 
-public class JSONMap extends AbstractJSONMap {
+import java.util.HashMap;
+
+public class JSONMap extends HashMap<String, Object> implements JSONStorage {
+	
+	private JSONStorage parent;
+	protected String key;
 	
 	public int getInt(String key) {
 		return (int) get(key);
@@ -42,6 +47,16 @@ public class JSONMap extends AbstractJSONMap {
 			builder.append(o.toString()).append(", ");
 		}
 		return builder.replace(builder.length() - 2, builder.length(), "}").toString();
+	}
+	
+	@Override
+	public JSONStorage getParent() {
+		return parent;
+	}
+	
+	@Override
+	public void setParent(JSONStorage obj) {
+		this.parent = obj;
 	}
 	
 }

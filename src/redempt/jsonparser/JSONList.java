@@ -1,9 +1,13 @@
 package redempt.jsonparser;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class JSONList extends AbstractJSONList {
+public class JSONList extends ArrayList<Object> implements JSONStorage {
+	
+	private JSONStorage parent;
+	protected boolean add = false;
 	
 	public int getInt(int key) {
 		return (int) get(key);
@@ -47,6 +51,16 @@ public class JSONList extends AbstractJSONList {
 			builder.append(o.toString()).append(", ");
 		}
 		return builder.replace(builder.length() - 2, builder.length(), "]").toString();
+	}
+	
+	@Override
+	public JSONStorage getParent() {
+		return parent;
+	}
+	
+	@Override
+	public void setParent(JSONStorage obj) {
+		this.parent = obj;
 	}
 	
 }
