@@ -30,7 +30,6 @@ public class JSONParser {
 		boolean end = false;
 		String key = null;
 		Type type = Type.INT;
-		int depth = 1;
 		for (int i = 1; i < json.length(); i++) {
 			switch (json.charAt(i)) {
 				case ' ':
@@ -76,7 +75,6 @@ public class JSONParser {
 					if (quoted) {
 						break;
 					}
-					depth--;
 					end = true;
 				case ',':
 					if (quoted) {
@@ -144,7 +142,6 @@ public class JSONParser {
 					if (quoted) {
 						break;
 					}
-					depth++;
 					switch (parentType) {
 						case LIST:
 							((AbstractJSONList) currentParent).add = true;
