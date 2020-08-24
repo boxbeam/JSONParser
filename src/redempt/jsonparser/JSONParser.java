@@ -2,173 +2,202 @@ package redempt.jsonparser;
 
 public class JSONParser {
 	
-	public static Object parse(String string) {
-		if (string.startsWith("{") && string.endsWith("}")) {
-			return parseMap(string);
-		}
-		if (string.startsWith("[") && string.endsWith("]")) {
-			return parseList(string);
-		}
-		if (string.startsWith("\"") && string.endsWith("\"")) {
-			return string.substring(1, string.length() - 1);
-		}
-		if (string.indexOf('.') != -1) {
-			try {
-				return Double.parseDouble(string);
-			} catch (NumberFormatException e) {
-			}
-		}
-		try {
-			return Integer.parseInt(string);
-		} catch (NumberFormatException e) {
-		}
-		return string;
+	public static JSONList parseList(String json) {
+		return (JSONList) parse(json);
 	}
 	
-	public static JSONMap parseMap(String string) {
-		JSONMap map = new JSONMap();
-		if (!(string.startsWith("{") && string.endsWith("}"))) {
-			throw new ParseException("Input is not a valid JSON map");
-		}
-		StringBuilder builder = new StringBuilder();
-		int depth = 0;
-		int split = -1;
-		boolean quote = false;
-		char[] chars = string.toCharArray();
-		loop:
-		for (int i = 1; i < chars.length - 1; i++) {
-			if (depth > 0 && quote && chars[i] == '\\' && chars[i + 1] == '\"') {
-				i++;
-				builder.append('\\').append('\"');
-				continue;
-			}
-			switch (chars[i]) {
-				case '\\':
-					if (depth == 0) {
-						if (chars[i + 1] == 'n') {
-							builder.append('\n');
-							i++;
-							continue loop;
-						}
-						builder.append(chars[i + 1]);
-						i++;
-						continue loop;
-					}
-				case ':':
-					if (!quote && depth == 0) {
-						split = builder.length();
-					}
-					break;
-				case ',':
-					if (!quote && depth == 0) {
-						String key = trim(builder, true, 0, split);
-						String value = trim(builder, false, split + 1, builder.length());
-						map.put(key, parse(value));
-						builder.setLength(0);
-						split = -1;
-						continue;
-					}
-					break;
-				case '{':
-				case '[':
-					if (!quote) {
-						depth++;
-					}
-					break;
-				case '}':
-				case ']':
-					if (!quote) {
-						depth--;
-					}
-					break;
-				case '"':
-					quote = !quote;
-			}
-			builder.append(chars[i]);
-		}
-		String key = trim(builder, true, 0, split);
-		String value = trim(builder, false, split + 1, builder.length());
-		map.put(key, parse(value));
-		return map;
+	public static JSONMap parseMap(String json) {
+		return (JSONMap) parse(json);
 	}
 	
-	public static JSONList parseList(String string) {
-		JSONList list = new JSONList();
-		if (!(string.startsWith("[") && string.endsWith("]"))) {
-			throw new ParseException("Input is not a valid JSON list");
+	private static JSONStorage parse(String json) {
+		Type parentType;
+		switch (json.charAt(0)) {
+			case '[':
+				parentType = Type.LIST;
+				break;
+			case '{':
+				parentType = Type.MAP;
+				break;
+			default:
+				throw new IllegalArgumentException("Invalid JSON input");
 		}
-		StringBuilder builder = new StringBuilder();
-		int depth = 0;
-		boolean quote = false;
-		char[] chars = string.toCharArray();
-		for (int i = 1; i < chars.length - 1; i++) {
-			if (depth > 0 && quote && chars[i] == '\\' && chars[i + 1] == '\"') {
-				i++;
-				builder.append('\\').append('\"');
-				continue;
-			}
-			switch (chars[i]) {
-				case '\\':
-					if (chars[i + 1] == 'n') {
-						builder.append('\n');
-						i++;
-						continue;
+		boolean quoted = false;
+		JSONStorage currentParent = parentType == Type.LIST ? new JSONList() : new JSONMap();
+		JSONStorage root = currentParent;
+		int cursor = 1;
+		int lastChar = -1;
+		boolean end = false;
+		String key = null;
+		Type type = Type.INT;
+		int depth = 1;
+		for (int i = 1; i < json.length(); i++) {
+			switch (json.charAt(i)) {
+				case ' ':
+				case '\t':
+				case '\n':
+				case '\r':
+					if (!quoted && lastChar == -1) {
+						cursor = i + 1;
 					}
-					builder.append(chars[i + 1]);
+					break;
+				case '\\':
 					i++;
-					continue;
-				case ',':
-					if (!quote && depth == 0) {
-						list.add(parse(trim(builder, false, 0, builder.length())));
-						builder.setLength(0);
-						continue;
+					lastChar = i;
+					break;
+				case '"':
+					quoted = !quoted;
+					lastChar = i;
+					type = Type.STRING;
+					break;
+				case '.':
+					if (!quoted) {
+						type = Type.DOUBLE;
 					}
+					lastChar = i;
+					break;
+				case 't':
+				case 'f':
+					if (!quoted) {
+						type = Type.BOOLEAN;
+					}
+					break;
+				case ':':
+					if (quoted) {
+						break;
+					}
+					key = json.substring(cursor + 1, lastChar);
+					type = Type.INT;
+					cursor = i + 1;
+					lastChar = -1;
+					break;
+				case ']':
+				case '}':
+					if (quoted) {
+						break;
+					}
+					depth--;
+					end = true;
+				case ',':
+					if (quoted) {
+						break;
+					}
+					if (lastChar != -1) {
+						Object value = null;
+						switch (type) {
+							case STRING:
+								value = substring(json, cursor + 1, lastChar);
+								break;
+							case INT:
+								value = Integer.parseInt(json, cursor, lastChar + 1, 10);
+								break;
+							case DOUBLE:
+								value = Double.parseDouble(json.substring(cursor, lastChar + 1));
+								break;
+							case BOOLEAN:
+								value = json.charAt(cursor) == 't';
+						}
+						switch (parentType) {
+							case LIST:
+								((AbstractJSONList) currentParent).add(value);
+								break;
+							case MAP:
+								((AbstractJSONMap) currentParent).put(key, value);
+								key = null;
+						}
+					} else {
+						switch (json.charAt(i)) {
+							case ']':
+							case '}':
+								end = true;
+								break;
+							default:
+								end = false;
+						}
+					}
+					type = Type.INT;
+					if (end) {
+						JSONStorage prev = currentParent;
+						currentParent = currentParent.getParent();
+						parentType = currentParent instanceof AbstractJSONList ? Type.LIST : Type.MAP;
+						if (currentParent != null) {
+							switch (parentType) {
+								case MAP:
+									((AbstractJSONMap) currentParent).put(((AbstractJSONMap) currentParent).key, prev);
+									((AbstractJSONMap) currentParent).key = null;
+									break;
+								case LIST:
+									if (((AbstractJSONList) currentParent).add) {
+										((AbstractJSONList) currentParent).add(prev);
+										((AbstractJSONList) currentParent).add = false;
+									}
+									break;
+							}
+						}
+					}
+					lastChar = -1;
+					cursor = i + 1;
+					end = false;
 					break;
 				case '{':
 				case '[':
-					if (!quote) {
-						depth++;
+					if (quoted) {
+						break;
 					}
-					break;
-				case '}':
-				case ']':
-					if (!quote) {
-						depth--;
+					depth++;
+					switch (parentType) {
+						case LIST:
+							((AbstractJSONList) currentParent).add = true;
+							break;
+						case MAP:
+							((AbstractJSONMap) currentParent).key = key;
 					}
+					key = null;
+					JSONStorage next;
+					if (json.charAt(i) == '[') {
+						parentType = Type.LIST;
+						next = new JSONList();
+					} else {
+						parentType = Type.MAP;
+						next = new JSONMap();
+					}
+					next.setParent(currentParent);
+					currentParent = next;
+					cursor = i + 1;
+					lastChar = -1;
 					break;
-				case '"':
-					quote = !quote;
+				default:
+					lastChar = i;
 			}
-			builder.append(chars[i]);
 		}
-		list.add(parse(trim(builder, false, 0, builder.length())));
-		return list;
+		return root;
 	}
 	
-	private static boolean isWhitespace(char c) {
-		return c == ' ' || c == '\n' || c == '\t';
+	private static String substring(String str, int start, int end) {
+		StringBuilder builder = new StringBuilder();
+		for (int i = start; i < end; i++) {
+			char c = str.charAt(i);
+			switch (c) {
+				case '\\':
+					i++;
+					builder.append(str.charAt(i));
+					break;
+				default:
+					builder.append(c);
+			}
+		}
+		return builder.toString();
 	}
 	
-	public static String trim(StringBuilder builder, boolean trimQuotes, int start, int end) {
-		if (builder.length() == 0) {
-			return "";
-		}
-		end--;
-		while (isWhitespace(builder.charAt(start)) && start < end) {
-			start++;
-		}
-		while (isWhitespace(builder.charAt(end)) && end > start) {
-			end--;
-		}
-		if (trimQuotes) {
-			if (builder.charAt(end) == '"') {
-				end--;
-			}
-			if (builder.charAt(start) == '"') {
-				start++;
-			}
-		}
-		return builder.substring(start, end + 1);
+	private enum Type {
+		
+		LIST,
+		MAP,
+		STRING,
+		BOOLEAN,
+		DOUBLE,
+		INT;
+		
 	}
 	
 }
