@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 public class JSONList extends ArrayList<Object> implements JSONStorage {
 	
 	private JSONStorage parent;
-	protected boolean add = false;
+	protected String key = null;
 	
 	public int getInt(int key) {
 		return (int) get(key);
@@ -44,8 +44,8 @@ public class JSONList extends ArrayList<Object> implements JSONStorage {
 		}
 		StringBuilder builder = new StringBuilder("[");
 		for (Object o : this) {
-			if (o instanceof String) {
-				builder.append('"').append(((String) o).replace("\\", "\\\\").replace("\"", "\\\"")).append("\", ");
+			if (o instanceof CharSequence) {
+				builder.append('"').append(o.toString().replace("\\", "\\\\").replace("\"", "\\\"")).append("\", ");
 				continue;
 			}
 			builder.append(o.toString()).append(", ");
@@ -61,6 +61,21 @@ public class JSONList extends ArrayList<Object> implements JSONStorage {
 	@Override
 	public void setParent(JSONStorage obj) {
 		this.parent = obj;
+	}
+	
+	@Override
+	public void add(String key, Object value) {
+		add(value);
+	}
+	
+	@Override
+	public String getTempKey() {
+		return key;
+	}
+	
+	@Override
+	public void setTempKey(String value) {
+		this.key = value;
 	}
 	
 }

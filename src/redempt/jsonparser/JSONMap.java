@@ -40,8 +40,8 @@ public class JSONMap extends HashMap<String, Object> implements JSONStorage {
 		for (Entry<String, Object> entry : this.entrySet()) {
 			builder.append('"').append(entry.getKey()).append('"').append(':');
 			Object o = entry.getValue();
-			if (o instanceof String) {
-				builder.append('"').append(((String) o).replace("\\", "\\\\").replace("\"", "\\\"")).append("\", ");
+			if (o instanceof CharSequence) {
+				builder.append('"').append((o.toString()).replace("\\", "\\\\").replace("\"", "\\\"")).append("\", ");
 				continue;
 			}
 			builder.append(o.toString()).append(", ");
@@ -57,6 +57,21 @@ public class JSONMap extends HashMap<String, Object> implements JSONStorage {
 	@Override
 	public void setParent(JSONStorage obj) {
 		this.parent = obj;
+	}
+	
+	@Override
+	public void add(String key, Object value) {
+		put(key, value);
+	}
+	
+	@Override
+	public String getTempKey() {
+		return key;
+	}
+	
+	@Override
+	public void setTempKey(String value) {
+		this.key = value;
 	}
 	
 }

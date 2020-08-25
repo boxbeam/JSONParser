@@ -30,8 +30,9 @@ public class JSONParser {
 		boolean end = false;
 		String key = null;
 		Type type = Type.INT;
+		char[] chars = json.toCharArray();
 		for (int i = 1; i < json.length(); i++) {
-			switch (json.charAt(i)) {
+			switch (chars[i]) {
 				case ' ':
 				case '\t':
 				case '\n':
@@ -84,7 +85,7 @@ public class JSONParser {
 						Object value = null;
 						switch (type) {
 							case STRING:
-								value = substring(json, cursor + 1, lastChar);
+								value = json.substring(cursor + 1, lastChar);
 								break;
 							case INT:
 								value = Integer.parseInt(json, cursor, lastChar + 1, 10);
@@ -93,18 +94,12 @@ public class JSONParser {
 								value = Double.parseDouble(json.substring(cursor, lastChar + 1));
 								break;
 							case BOOLEAN:
-								value = json.charAt(cursor) == 't';
+								value = chars[i] == 't';
 						}
-						switch (parentType) {
-							case LIST:
-								((JSONList) currentParent).add(value);
-								break;
-							case MAP:
-								((JSONMap) currentParent).put(key, value);
-								key = null;
-						}
+						currentParent.add(key, value);
+						key = null;
 					} else {
-						switch (json.charAt(i)) {
+						switch (chars[i]) {
 							case ']':
 							case '}':
 								end = true;
@@ -119,17 +114,9 @@ public class JSONParser {
 						currentParent = currentParent.getParent();
 						parentType = currentParent instanceof JSONList ? Type.LIST : Type.MAP;
 						if (currentParent != null) {
-							switch (parentType) {
-								case MAP:
-									((JSONMap) currentParent).put(((JSONMap) currentParent).key, prev);
-									((JSONMap) currentParent).key = null;
-									break;
-								case LIST:
-									if (((JSONList) currentParent).add) {
-										((JSONList) currentParent).add(prev);
-										((JSONList) currentParent).add = false;
-									}
-									break;
+							if (currentParent.getTempKey() != null) {
+								currentParent.add(currentParent.getTempKey(), prev);
+								currentParent.setTempKey(null);
 							}
 						}
 					}
@@ -142,22 +129,10 @@ public class JSONParser {
 					if (quoted) {
 						break;
 					}
-					switch (parentType) {
-						case LIST:
-							((JSONList) currentParent).add = true;
-							break;
-						case MAP:
-							((JSONMap) currentParent).key = key;
-					}
+					currentParent.setTempKey(key == null ? "" : key);
 					key = null;
 					JSONStorage next;
-					if (json.charAt(i) == '[') {
-						parentType = Type.LIST;
-						next = new JSONList();
-					} else {
-						parentType = Type.MAP;
-						next = new JSONMap();
-					}
+					next = chars[i] == '[' ? new JSONList() : new JSONMap();
 					next.setParent(currentParent);
 					currentParent = next;
 					cursor = i + 1;
@@ -168,22 +143,6 @@ public class JSONParser {
 			}
 		}
 		return root;
-	}
-	
-	private static String substring(String str, int start, int end) {
-		StringBuilder builder = new StringBuilder();
-		for (int i = start; i < end; i++) {
-			char c = str.charAt(i);
-			switch (c) {
-				case '\\':
-					i++;
-					builder.append(str.charAt(i));
-					break;
-				default:
-					builder.append(c);
-			}
-		}
-		return builder.toString();
 	}
 	
 	private enum Type {
