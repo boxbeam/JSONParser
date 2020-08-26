@@ -2,10 +2,20 @@ package redempt.jsonparser;
 
 public class JSONParser {
 	
+	/**
+	 * Parse a JSONList from a JSON string
+	 * @param json The JSON string
+	 * @return The JSONList parsed out of it
+	 */
 	public static JSONList parseList(String json) {
 		return (JSONList) parse(json);
 	}
 	
+	/**
+	 * Parse a JSONMap from a JSON string
+	 * @param json The JSON string
+	 * @return TThe JSONList parsed out of it
+	 */
 	public static JSONMap parseMap(String json) {
 		return (JSONMap) parse(json);
 	}
@@ -85,10 +95,10 @@ public class JSONParser {
 						Object value = null;
 						switch (type) {
 							case STRING:
-								value = json.substring(cursor + 1, lastChar);
+								value= substring(chars, cursor + 1, lastChar);
 								break;
 							case INT:
-								value = Integer.parseInt(json, cursor, lastChar + 1, 10);
+								value = Integer.parseInt(json.substring(cursor, lastChar + 1));
 								break;
 							case DOUBLE:
 								value = Double.parseDouble(json.substring(cursor, lastChar + 1));
@@ -143,6 +153,20 @@ public class JSONParser {
 			}
 		}
 		return root;
+	}
+	
+	private static String substring(char[] chars, int start, int end) {
+		StringBuilder builder = new StringBuilder();
+		for (int i = start; i < end; i++) {
+			char c = chars[i];
+			if (c == '\\') {
+				builder.append(chars[i + 1]);
+				i++;
+				continue;
+			}
+			builder.append(c);
+		}
+		return builder.toString();
 	}
 	
 	private enum Type {
