@@ -44,7 +44,7 @@ public class JSONMap extends HashMap<String, Object> implements JSONStorage {
 				builder.append('"').append((o.toString()).replace("\\", "\\\\").replace("\"", "\\\"")).append("\", ");
 				continue;
 			}
-			builder.append(o.toString()).append(", ");
+			builder.append(o == null ? "null" : o.toString()).append(", ");
 		}
 		return builder.replace(builder.length() - 2, builder.length(), "}").toString();
 	}

@@ -1,7 +1,7 @@
 package redempt.jsonparser;
 
 public class JSONParser {
-	
+
 	/**
 	 * Parse a JSONList from a JSON string
 	 * @param json The JSON string
@@ -55,6 +55,9 @@ public class JSONParser {
 					i++;
 					lastChar = i;
 					break;
+				case 'n':
+					type = Type.NULL;
+					break;
 				case '"':
 					quoted = !quoted;
 					lastChar = i;
@@ -105,6 +108,10 @@ public class JSONParser {
 								break;
 							case BOOLEAN:
 								value = chars[cursor] == 't';
+								break;
+							case NULL:
+								value = null;
+								break;
 						}
 						currentParent.add(key, value);
 						key = null;
@@ -176,7 +183,8 @@ public class JSONParser {
 		STRING,
 		BOOLEAN,
 		DOUBLE,
-		INT;
+		INT,
+		NULL;
 		
 	}
 	
