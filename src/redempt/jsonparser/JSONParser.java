@@ -56,7 +56,10 @@ public class JSONParser {
 					lastChar = i;
 					break;
 				case 'n':
-					type = Type.NULL;
+					if (!quoted) {
+						type = Type.NULL;
+					}
+					lastChar = i;
 					break;
 				case '"':
 					quoted = !quoted;
