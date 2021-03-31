@@ -48,7 +48,7 @@ public class JSONList extends ArrayList<Object> implements JSONStorage {
 				builder.append('"').append(o.toString().replace("\\", "\\\\").replace("\"", "\\\"")).append("\", ");
 				continue;
 			}
-			builder.append(o == null ? "null" : o.toString()).append(", ");
+			builder.append(o).append(", ");
 		}
 		return builder.replace(builder.length() - 2, builder.length(), "]").toString();
 	}
