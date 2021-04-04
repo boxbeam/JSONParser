@@ -13,6 +13,10 @@ public class JSONList extends ArrayList<Object> implements JSONStorage {
 		return (int) get(key);
 	}
 	
+	public long getLong(int key) {
+		return (long) get(key);
+	}
+	
 	public boolean getBoolean(int key) {
 		return (boolean) get(key);
 	}

@@ -104,7 +104,7 @@ public class JSONParser {
 								value= substring(chars, cursor + 1, lastChar);
 								break;
 							case INT:
-								value = Integer.parseInt(json.substring(cursor, lastChar + 1));
+								value = Long.parseLong(json.substring(cursor, lastChar + 1));
 								break;
 							case DOUBLE:
 								value = Double.parseDouble(json.substring(cursor, lastChar + 1));
